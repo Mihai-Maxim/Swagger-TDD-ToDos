@@ -1,4 +1,4 @@
-swagger: '2.0'
+=swagger: '2.0'
 info:
   title: ToDoS API
   description: A simple ToDoS API supporting CRUD operations
@@ -92,8 +92,6 @@ paths:
           description: Successful operation
         404:
           description: Todo not found
-
-  /todos/{order_number}/patch:
     patch:
       summary: Update specific fields of a todo by order number
       parameters:

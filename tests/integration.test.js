@@ -2,7 +2,6 @@ import request from 'supertest';
 import app from "../app.js"
 
 
-let first_to_do = null
 
 const first_to_do_date = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
 
