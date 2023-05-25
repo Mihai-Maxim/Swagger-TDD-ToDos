@@ -5,7 +5,7 @@ import app from "../app.js"
 
 const first_to_do_date = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
 
-describe.only('POST /api/todos', () => {
+describe('POST /api/todos', () => {
 
     it('should create a new todo', async () => {
       const todoData = {
@@ -143,9 +143,22 @@ describe.only('POST /api/todos', () => {
     });
 });
 
-
 describe('GET /api/todos', () => {
+
     it('should get all todos', async () => {
+
+      const todoData = {
+        order_number: 0,
+        title: 'New Todo 2',
+        description: 'This is the first todo',
+        due_date: first_to_do_date,
+        status: 'in_progress',
+      };
+  
+      await request(app)
+        .post('/api/todos')
+        .send(todoData)
+
       const response = await request(app)
         .get('/api/todos')
         .expect(200);
@@ -169,8 +182,6 @@ describe('GET /api/todos', () => {
       
     });
 });
-
-  
 
 describe('GET /api/todos/{order_number}', () => {
   it('should get a specific todo', async () => {
@@ -197,11 +208,96 @@ describe('GET /api/todos/{order_number}', () => {
 });
 
 describe('PUT /api/todos/{order_number}', () => {
+
   it('should update a specific todo', async () => {
-    const newDate = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
+    const todoData1 = {
+      order_number: 0,
+      title: 'first insert',
+      description: 'blahblah',
+      due_date: first_to_do_date,
+      status: 'in_progress',
+    };
+
+    const todoData2 = {
+      order_number: 1,
+      title: 'second insert',
+      description: 'hello there',
+      due_date: first_to_do_date,
+      status: 'in_progress',
+    };
+
     await request(app)
+      .post('/api/todos')
+      .send(todoData1)
+
+    await request(app)
+      .post('/api/todos')
+      .send(todoData2)
+
+    const newDate = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
+
+    const r1 = await request(app)
       .put(`/api/todos/0`)
       .send({
+        order_number: 0,
+        title: 'first insert update without change',
+        description: 'This todo has been updated',
+        due_date: newDate,
+        status: 'completed',
+      })
+      .expect(200);
+
+    let response = await request(app)
+      .get(`/api/todos/0`)
+      .expect(200);
+
+    expect(response.body.description).toBe("This todo has been updated");
+    expect(response.body.title).toBe("first insert update without change")
+    expect(response.body.order_number).toBe(0)
+    expect(response.body.due_date).toBe(newDate)
+
+    response = await request(app)
+      .get(`/api/todos/1`)
+      .expect(200);
+
+    expect(response.body.description).toBe("hello there");
+    expect(response.body.title).toBe("second insert")
+    expect(response.body.order_number).toBe(1)
+    expect(response.body.due_date).toBe(first_to_do_date)
+
+  });
+  it('should update a specific todo and change order', async () => {
+    const todoData1 = {
+      order_number: 0,
+      title: 'first insert',
+      description: 'blahblah',
+      due_date: first_to_do_date,
+      status: 'in_progress',
+    };
+
+    const todoData2 = {
+      order_number: 1,
+      title: 'second insert',
+      description: 'hello there',
+      due_date: first_to_do_date,
+      status: 'in_progress',
+    };
+
+    await request(app)
+      .post('/api/todos')
+      .send(todoData1)
+
+    await request(app)
+      .post('/api/todos')
+      .send(todoData2)
+
+
+    const newDate = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
+
+    const r1 = await request(app)
+      .put(`/api/todos/0`)
+      .send({
+        order_number: 1,
         title: 'Updated ToDo',
         description: 'This todo has been updated',
         due_date: newDate,
@@ -209,21 +305,32 @@ describe('PUT /api/todos/{order_number}', () => {
       })
       .expect(200);
 
-    const response = await request(app)
-      .get(`/api/todos/0`)
+    let response = await request(app)
+      .get(`/api/todos/1`)
       .expect(200);
 
     expect(response.body.description).toBe("This todo has been updated");
     expect(response.body.title).toBe("Updated ToDo")
+    expect(response.body.order_number).toBe(1)
     expect(response.body.due_date).toBe(newDate)
+
+    response = await request(app)
+      .get(`/api/todos/0`)
+      .expect(200);
+
+    expect(response.body.description).toBe("hello there");
+    expect(response.body.title).toBe("second insert")
+    expect(response.body.order_number).toBe(0)
+    expect(response.body.due_date).toBe(first_to_do_date)
 
   });
 
   it('should return 404 if order_number is not found', async () => {
 
     const response = await request(app)
-      .put('/api/todos/999999') 
+      .put('/api/todos/99999') 
       .send({
+        order_number: 0,
         title: 'Updated ToDo',
         description: 'This todo has been updated',
         due_date: new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString(),
@@ -285,7 +392,7 @@ describe('PUT /api/todos/{order_number}', () => {
     expect(response.status).toBe(400);
   });
 
-  it('should return 400 if not all required fields are present (title, due_date, status)', async () => {
+  it('should return 400 if not all required fields are present (title, due_date, status, order_number)', async () => {
     const response = await request(app)
       .put('/api/todos/0')
       .send({
@@ -304,7 +411,7 @@ describe('PATCH /api/todos/{order_number}', () => {
     const newDate = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
     const updatedFields = {
       title: 'Modified Title',
-      description: "hello there",
+      description: "hello from the other side",
       due_date: newDate
     };
 
@@ -318,11 +425,12 @@ describe('PATCH /api/todos/{order_number}', () => {
       .expect(200);
 
     expect(response.body.title).toBe(updatedFields.title);
-    expect(response.body.due_date).toBe(updatedFields.newDate);
+    expect(response.body.title).toBe(updatedFields.title);
+    expect(response.body.description).toBe("hello from the other side");
+    expect(response.body.due_date).toBe(newDate);
 
     expect(typeof response.body.creation_date).toBe("string")
     expect(typeof response.body.last_update_date).toBe("string")
-    expect(typeof response.body.description).toBe("string")
     expect(typeof response.body.status).toBe("string")
   });
 
@@ -342,7 +450,7 @@ describe('PATCH /api/todos/{order_number}', () => {
 
 describe('DELETE /api/todos/{order_number}', () => {
     it('should delete a todo and update the order numbers', async () => {
-        // Insert 3 new todos
+
         const todo1Data = {
           order_number: 0,
           title: 'Todo 1',
