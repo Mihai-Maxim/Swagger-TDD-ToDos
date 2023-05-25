@@ -15,9 +15,9 @@ model ToDo {
   order_number      Int
   title             String
   description       String
-  creation_date     DateTime
-  last_update_date  DateTime
-  due_date          DateTime
+  creation_date     DateTime    @default(now())
+  last_update_date  DateTime    @updatedAt
+  due_date          DateTime?    
   status            ToDoStatus
 }
 

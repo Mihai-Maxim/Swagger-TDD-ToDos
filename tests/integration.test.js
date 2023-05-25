@@ -5,7 +5,7 @@ import app from "../app.js"
 
 const first_to_do_date = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString()
 
-describe('POST /api/todos', () => {
+describe.only('POST /api/todos', () => {
 
     it('should create a new todo', async () => {
       const todoData = {
@@ -14,11 +14,19 @@ describe('POST /api/todos', () => {
         due_date: new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString(),
         status: 'in_progress',
       };
+
   
       const response = await request(app)
         .post('/api/todos')
         .send(todoData)
         .expect(201);
+
+      const todo = response.body
+      expect(typeof todo.creation_date).toBe("string")
+      expect(typeof todo.last_update_date).toBe("string")
+      expect(todo.title).toBe("New Todo 1")
+      expect(todo.description).toBe("This is a new todo")
+      expect(todo.status).toBe("in_progress")
 
     })
 
@@ -35,6 +43,15 @@ describe('POST /api/todos', () => {
         .post('/api/todos')
         .send(todoData)
         .expect(201);
+
+      const todo = response.body
+      expect(typeof todo.creation_date).toBe("string")
+      expect(typeof todo.last_update_date).toBe("string")
+      expect(todo.title).toBe("New Todo 2")
+      expect(todo.description).toBe("This is the first todo")
+      expect(todo.status).toBe("in_progress")
+      expect(todo.order_number).toBe(0)
+
     });
   
     it('should return 400 if todo data is invalid', async () => {
@@ -42,7 +59,7 @@ describe('POST /api/todos', () => {
         description: 'Invalid Todo Data', 
       };
   
-      await request(app)
+      const resonse = await request(app)
         .post('/api/todos')
         .send(invalidTodoData)
         .expect(400);
@@ -56,10 +73,11 @@ describe('POST /api/todos', () => {
         status: 'in_progress',
       };
   
-      await request(app)
+      const response = await request(app)
         .post('/api/todos')
         .send(todoData)
         .expect(400);
+        
     });
   
     it('should return 400 if status is invalid', async () => {
@@ -88,6 +106,40 @@ describe('POST /api/todos', () => {
         .post('/api/todos')
         .send(todoData)
         .expect(400);
+    });
+
+    it('should return 400 if order_number is negative', async () => {
+      const todoData = {
+        order_number: -1,
+        title: 'Completed Todo',
+        description: 'This todo is already completed',
+        due_date: new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString(),
+        status: 'in_progress',
+      };
+  
+      const response = await request(app)
+        .post('/api/todos')
+        .send(todoData)
+        .expect(400);
+      
+    });
+
+
+    it('should return 400 if order_number is too high and can t be found', async () => {
+      const todoData = {
+        order_number: 9999999999,
+        title: 'Completed Todo',
+        description: 'This todo is already completed',
+        due_date: new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString(),
+        status: 'in_progress',
+      };
+  
+      const response = await request(app)
+        .post('/api/todos')
+        .send(todoData)
+        .expect(400);
+
+      expect(response.body.error).toBe("invalid order_number")
     });
 });
 

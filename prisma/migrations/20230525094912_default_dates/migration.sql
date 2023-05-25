@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `ToDo` MODIFY `creation_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    MODIFY `due_date` DATETIME(3) NULL;

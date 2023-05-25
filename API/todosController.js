@@ -22,6 +22,7 @@ const getOrderNumberAt = async (orderNumber) => {
         });
         return todos;
     } catch (error) {
+        console.log(error)
         console.error('Error retrieving ToDos:', error);
         throw error;
     }
@@ -33,7 +34,9 @@ const insertToDo = async (toDo, isNewPoz) => {
 
     const { order_number } = toDo
 
-    if (!isNewPoz && order_number) {
+    const has_order_number = order_number || order_number === 0
+
+    if (!isNewPoz && has_order_number) {
         try {
             await prisma.toDo.updateMany({
               where: {
@@ -48,30 +51,19 @@ const insertToDo = async (toDo, isNewPoz) => {
               },
             });
         
-            console.log('Order numbers incremented successfully.');
           } catch (error) {
             console.error('Error incrementing order numbers:', error);
             throw error;
           }
     }
 
+    if (!has_order_number) {
 
-    if (order_number && isNewPoz) {
-        try {
-            const newToDo = await prisma.toDo.create({
-                data: toDo,
-            });
-            return newToDo;
-        } catch (error) {
-            console.error('Error adding new ToDo:', error);
-            throw error;
-        }
+        const count = await getToDosCount()
+
+        toDo.order_number = count
     }
-    
-    const count = await getToDosCount()
-
-    toDo.order_number = count - 1
-
+  
     try {
         const newToDo = await prisma.toDo.create({
             data: toDo,
@@ -89,9 +81,14 @@ const insertToDo = async (toDo, isNewPoz) => {
 
 const checkOrderNumberForInsert = async (order_number) => {
 
-    if (order_number < 0 || !order_number) return {
+    if (order_number < 0) return {
         canBeInserted: false,
         isNewPoz: false
+    }
+
+    if (!order_number && order_number !== 0) return {
+        canBeInserted: true,
+        isNewPoz: true
     }
 
     const count = await getToDosCount()
@@ -103,19 +100,22 @@ const checkOrderNumberForInsert = async (order_number) => {
 
     const hasExactMatch = await getOrderNumberAt(order_number)
 
-    if (hasExactMatch.length > 0) return {
+    if (hasExactMatch && hasExactMatch.length > 0) return {
         canBeInserted: true,
         isNewPoz: false,
     }
 
-    if (order_number - 1 < 0) return {
-        canBeInserted: false,
-        isNewPoz: false
-    }
     
-    const newInsert = await getOrderNumberAt(order_number - 1)
+    let newInsert = await getOrderNumberAt(order_number - 1)
 
-    if (newInsert.length > 0) return {
+    if (newInsert && newInsert.length > 0) return {
+        canBeInserted: true,
+        isNewPoz: true,
+    }
+
+    newInsert = await getOrderNumberAt(order_number + 1)
+
+    if (newInsert && newInsert.length > 0) return {
         canBeInserted: true,
         isNewPoz: true,
     }

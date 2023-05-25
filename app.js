@@ -9,7 +9,7 @@ const app = express()
 
 app.use(bodyParser.json())
 
-app.use(todosRouter)
+app.use("/api/", todosRouter)
 
 
 export default app

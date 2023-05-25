@@ -20,6 +20,7 @@ router.post("/todos", async (req, res) => {
 
     if (!ToDo) {
         return res.status(400).json({
+            success: false,
             error: "todo must contain title and optional: description, due_date, order_number, status ('in_backlog', 'in_progress', 'blocked')"
         })
     }
@@ -35,9 +36,9 @@ router.post("/todos", async (req, res) => {
         })
     }
 
-    const insertedToDo =  await insertToDo(ToDo, isNewPoz)
+    const insertedToDo = await insertToDo(ToDo, isNewPoz)
 
-    return res.status(200).json(insertedToDo)
+    return res.status(201).json(insertedToDo)
 })
 
 
